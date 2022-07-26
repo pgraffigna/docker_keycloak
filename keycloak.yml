@@ -1,0 +1,67 @@
+version: '3'
+
+services:
+  keycloak:
+      #image: quay.io/keycloak/keycloak
+      image: jboss/keycloak
+      container_name: key_keycloak
+      networks:
+        - keycloak-net
+      environment:
+        DB_VENDOR: MYSQL
+        DB_ADDR: mysql
+        DB_DATABASE: keycloak
+        DB_USER: keycloak
+        DB_PASSWORD: password
+        KEYCLOAK_USER: pgraffigna
+        KEYCLOAK_PASSWORD: Passw0rd123!
+      ports:
+        - 8080:8080
+      depends_on:
+        - mysql
+
+  mysql:
+      image: mysql:5.7
+      container_name: key_mysql
+      networks:
+        - keycloak-net
+      volumes:
+        - mysql_data:/var/lib/mysql
+      environment:
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_DATABASE: keycloak
+        MYSQL_USER: keycloak
+        MYSQL_PASSWORD: password
+
+
+  lldap:
+    image: nitnelave/lldap:latest
+    container_name: key_lldap
+    networks:
+        - keycloak-net
+    ports:
+      - 3890:3890
+      - 17170:17170 # web front-end
+    volumes:
+      - lldap_data:/data
+    environment:
+      - UID=1000
+      - GID=1000
+      - LLDAP_JWT_SECRET= 
+      - LLDAP_LDAP_USER_PASS=eteZZisn
+      - LLDAP_LDAP_BASE_DN=dc=cultura,dc=lab
+
+networks:
+  keycloak-net:
+    external:
+      name: keycloak-net
+# docker network create keycloak-net de tipo bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  lldap_data:
+    driver: local
+
+#jwt_token: secret-key HS-256
+#docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' key_lldap
