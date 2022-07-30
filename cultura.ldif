@@ -1,0 +1,58 @@
+# grupos
+dn: ou=roles,home,dc=lab
+objectclass: top
+objectclass: organizationalUnit
+ou: roles
+
+dn: ou=people,home,dc=lab
+objectclass: top
+objectclass: organizationalUnit
+ou: people
+
+# usuarios
+dn: uid=pgraffigna,ou=people,home,dc=lab
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: pablo
+sn: graffigna
+mail: pgraffigna@home.lab
+uid: pgraffigna
+userPassword: password123!
+
+dn: uid=fduran,ou=people,dc=home,dc=lab
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: fernanda
+sn: duran
+mail: fduran@home.lab
+uid: fduran
+userPassword: password789
+
+dn: uid=sistemas,ou=people,dc=home,dc=lab
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: super
+sn: user
+mail: sistemas@home.lab
+uid: sistemas
+userPassword: super_secret
+
+# miembros de grupos
+dn: cn=USUARIOS,ou=roles,dc=home,dc=lab
+objectclass: top
+objectclass: groupOfNames
+cn: USUARIOS
+member: uid=pgraffigna,ou=people,dc=home,dc=lab
+member: uid=fduran,ou=people,dc=home,dc=lab
+
+dn: cn=ADMINS,ou=roles,dc=home,dc=lab
+objectclass: top
+objectclass: groupOfNames
+cn: ADMINS
+member: uid=sistemas,ou=people,dc=home,dc=lab

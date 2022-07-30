@@ -1,0 +1,61 @@
+##### instalando ldap #############
+
+# actualizando los repos
+sudo apt update; sudo apt install -y slapd ldap-utils
+
+# configurando el hostname FQDN
+sudo hostnamectl set-hostname ldap.home.lab
+echo '192.168.121.200 ldap.home.lab ldap' | sudo tee -a /etc/hosts
+
+# reconfigurando slapd
+sudo dpkg-reconfigure slapd
+--> omit openLDAP server configuration? NO
+--> DNS domain name: cultura.lab
+--> Organization name: cultura
+--> remove database when slapd is purged? NO
+--> move old database? YES
+
+# chequeando la configuracion
+sudo slapcat
+
+# guardando los cambios
+sudo ldapadd -D "cn=admin,dc=home,dc=lab" -W -H ldapi:/// -f /etc/ldap/testing.ldif
+
+### buscando OUs en el dominio home.lab
+sudo ldapsearch -x -b "dc=home,dc=lab" ou
+
+### buscando todos los datos del dominio cultura.lab
+sudo ldapsearch -x -b "ou=Personal,dc=home,dc=lab"
+
+##### instalando phpldapadmin #######
+sudo apt -y install phpldapadmin
+
+# configurando phpldapadmin
+sudo nano /etc/phpldapadmin/config.php
+--> $servers->setValue('server','host','domain_name_or_IP');
+--> $servers->setValue('server','base',array('dc=home,dc=lab'));
+--> $servers->setValue('login','bind_id','cn=admin,dc=home,dc=lab');
+--> $config->custom->appearance['hide_template_warning'] = true;
+
+###### instalando keycloak ###########
+## instalando openjdk
+sudo apt update; sudo apt install -y default-jdk
+
+# instalando keycloak
+cd /tmp && wget -q https://github.com/keycloak/keycloak/releases/download/19.0.0/keycloak-19.0.0.tar.gz
+tar -xvf keycloak-19.0.0.tar.gz && cd keycloak-19.0.0
+bin/kc.sh build
+
+## production mode
+bin/kc.sh start
+
+## dev mode 
+bin/kc.sh start-dev
+
+## dev mode con acceso
+export KEYCLOAK_ADMIN=username
+export KEYCLOAK_ADMIN_PASSWORD=password
+sudo -E bin/kc.sh start
+
+
+

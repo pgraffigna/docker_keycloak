@@ -33,7 +33,6 @@ services:
         MYSQL_USER: keycloak
         MYSQL_PASSWORD: password
 
-
   lldap:
     image: nitnelave/lldap:latest
     container_name: key_lldap
@@ -47,7 +46,7 @@ services:
     environment:
       - UID=1000
       - GID=1000
-      - LLDAP_JWT_SECRET= 
+      - LLDAP_JWT_SECRET=JWT_TOKEN
       - LLDAP_LDAP_USER_PASS=eteZZisn
       - LLDAP_LDAP_BASE_DN=dc=cultura,dc=lab
 
@@ -55,7 +54,7 @@ networks:
   keycloak-net:
     external:
       name: keycloak-net
-# docker network create keycloak-net de tipo bridge
+# docker network create keycloak-net 
 
 volumes:
   mysql_data:
