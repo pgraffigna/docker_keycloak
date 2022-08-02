@@ -1,11 +1,10 @@
-##### instalando ldap #############
+######## instalando ldap ###########################
+# actualizacion de los repos
+sudo apt update; sudo apt install -y slapd ldap-utils	
 
-# actualizando los repos
-sudo apt update; sudo apt install -y slapd ldap-utils
-
-# configurando el hostname FQDN
-sudo hostnamectl set-hostname ldap.home.lab
-echo '192.168.121.200 ldap.home.lab ldap' | sudo tee -a /etc/hosts
+# configurando el hostname **FQDN
+sudo hostnamectl set-hostname ldap.cultura.lab
+echo '192.168.121.200 ldap.cultura.lab ldap' | sudo tee -a /etc/hosts
 
 # reconfigurando slapd
 sudo dpkg-reconfigure slapd
@@ -19,40 +18,83 @@ sudo dpkg-reconfigure slapd
 sudo slapcat
 
 # guardando los cambios
-sudo ldapadd -D "cn=admin,dc=home,dc=lab" -W -H ldapi:/// -f /etc/ldap/testing.ldif
+sudo ldapadd -D "cn=admin,dc=cultura,dc=lab" -W -H ldapi:/// -f /etc/ldap/users.ldif
 
-### buscando OUs en el dominio home.lab
-sudo ldapsearch -x -b "dc=home,dc=lab" ou
+# buscando OUs en el dominio cultura.lab
+sudo ldapsearch -x -b "dc=cultura,dc=lab" ou
 
-### buscando todos los datos del dominio cultura.lab
-sudo ldapsearch -x -b "ou=Personal,dc=home,dc=lab"
+# buscando todos los datos del dominio cultura.lab
+sudo ldapsearch -x -b "ou=Personal,dc=cultura,dc=lab"
 
-##### instalando phpldapadmin #######
+####### instalando phpldapadmin #################
 sudo apt -y install phpldapadmin
 
 # configurando phpldapadmin
 sudo nano /etc/phpldapadmin/config.php
---> $servers->setValue('server','host','domain_name_or_IP');
---> $servers->setValue('server','base',array('dc=home,dc=lab'));
---> $servers->setValue('login','bind_id','cn=admin,dc=home,dc=lab');
+--> $servers->setValue('server','host','server_domain_name_or_IP');
+--> $servers->setValue('server','base',array('dc=cultura,dc=lab'));
+--> $servers->setValue('login','bind_id','cn=admin,dc=cultura,dc=lab');
 --> $config->custom->appearance['hide_template_warning'] = true;
 
-###### instalando keycloak ###########
-## instalando openjdk
+###### instalando keycloak ########################
+# instalando openjdk
 sudo apt update; sudo apt install -y default-jdk
 
-# instalando keycloak
-cd /tmp && wget -q https://github.com/keycloak/keycloak/releases/download/19.0.0/keycloak-19.0.0.tar.gz
+# instalando mariadb
+sudo apt install -y mariadb-server && sudo mysql_secure_installation
+
+--> Enter current password for root (enter for none): ENTER
+--> Set root password? [Y/n] N
+--> Remove anonymous users? [Y/n] Y
+--> Disallow root login remotely? [Y/n] Y
+--> Remove test database and access to it? [Y/n] Y
+--> Reload privilege tables now? [Y/n] Y
+
+# configurando acceso a mysql sin sudo
+sudo mariadb
+
+--> MariaDB [(none)]> GRANT ALL ON *.* TO 'keycloak'@'localhost' IDENTIFIED BY 'keycloak_password' WITH GRANT OPTION;
+--> MariaDB [mysql]> FLUSH PRIVILEGES;
+--> MariaDB [mysql]> exit;
+
+# creando keycloak database
+MariaDB [(none)]> Create DATABASE keycloak;
+
+sudo systemctl restart mariadb
+
+# mariadb java connector
+wget -q https://downloads.mariadb.com/Connectors/java/latest/mariadb-java-client-2.3.0.jar
+
+https://janua40.rssing.com/chan-57856102/all_p5.html
+https://www.janua.fr/how-to-install-keycloak-with-mariadb/
+
+####### keycloak 18 ##############
+wget -q https://github.com/keycloak/keycloak/releases/download/18.0.2/keycloak-18.0.2.tar.gz
+tar -xvf keycloak-18.0.2.tar.gz && cd keycloak-18.0.2
+
+add-user.sh --> usuario management
+add-user-keycloak.sh --> usuario admin web **** admin:password
+
+bin/standalone.sh
+
+####### keycloak 19 ##################
+wget -q https://github.com/keycloak/keycloak/releases/download/19.0.0/keycloak-19.0.0.tar.gz
 tar -xvf keycloak-19.0.0.tar.gz && cd keycloak-19.0.0
-bin/kc.sh build
 
-## production mode
-bin/kc.sh start
+# creando certificados para testing
+## privatekey
+keytool-genkeypair -storepass privatekey -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=keycloak-server" -alias server -ext "SAN:c=DNS:keycloak,IP:192.168.121.202" -keystore conf/server.keystore
 
-## dev mode 
-bin/kc.sh start-dev
+# build con db
+bin/kc.sh build --db mariadb
 
-## dev mode con acceso
+# production mode
+bin/kc.sh start --db-url-host=keycloak --db-username=keycloak --db-password=keycloak_password
+
+# dev mode
+bin/kc.sh start-dev --db-url-host=keycloak --db-username=keycloak --db-password=keycloak_password
+
+# dev mode con acceso explicito
 export KEYCLOAK_ADMIN=username
 export KEYCLOAK_ADMIN_PASSWORD=password
 sudo -E bin/kc.sh start
