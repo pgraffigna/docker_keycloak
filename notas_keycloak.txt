@@ -1,0 +1,32 @@
+###### instalando keycloak ########################
+# instalando openjdk
+sudo apt update; sudo apt install -y default-jdk
+
+# mariadb java connector
+wget -q https://downloads.mariadb.com/Connectors/java/latest/mariadb-java-client-2.3.0.jar
+
+https://janua40.rssing.com/chan-57856102/all_p5.html
+https://www.janua.fr/how-to-install-keycloak-with-mariadb/
+
+# fixes
+
+
+# instalando keycloak 18
+https://github.com/keycloak/keycloak/releases/download/18.0.0/keycloak-18.0.0.tar.gz
+tar -xvf keycloak-18.0.0.tar.gz && cd keycloak-18.0.0
+
+add-user.sh --> usuario management
+add-user-keycloak.sh --> usuario admin web **** admin:password
+
+bin/standalone.sh
+
+# creando certificados para testing
+## privatekey
+keytool-genkeypair -storepass privatekey -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=keycloak-server" -alias server -ext "SAN:c=DNS:keycloak,IP:192.168.121.202" -keystore conf/server.keystore
+
+# dev mode con acceso explicito
+export KEYCLOAK_ADMIN=username
+export KEYCLOAK_ADMIN_PASSWORD=password
+sudo -E bin/kc.sh start
+
+
