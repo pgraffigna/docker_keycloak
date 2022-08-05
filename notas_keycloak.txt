@@ -2,24 +2,84 @@
 # instalando openjdk
 sudo apt update; sudo apt install -y default-jdk
 
-# mariadb java connector
-wget -q https://downloads.mariadb.com/Connectors/java/latest/mariadb-java-client-2.3.0.jar
-
-https://janua40.rssing.com/chan-57856102/all_p5.html
-https://www.janua.fr/how-to-install-keycloak-with-mariadb/
-
-# fixes
-
+## configurar mariadb
+### ver notas_db.txt para la instalacion
 
 # instalando keycloak 18
-https://github.com/keycloak/keycloak/releases/download/18.0.0/keycloak-18.0.0.tar.gz
-tar -xvf keycloak-18.0.0.tar.gz && cd keycloak-18.0.0
+wget -q https://github.com/keycloak/keycloak/releases/download/18.0.0/keycloak-legacy-18.0.0.tar.gz
+tar -xvf keycloak-legacy-18.0.0.tar.gz 
 
-add-user.sh --> usuario management
-add-user-keycloak.sh --> usuario admin web **** admin:password
+# mariadb java connector
+mkdir -p ~/keycloak-18.0.0/modules/com/mariadb/main
+wget -q https://downloads.mariadb.com/Connectors/java/latest/mariadb-java-client-2.3.0.jar -O ~/keycloak-18.0.0/modules/com/mariadb/main/mariadb-java-client-2.3.0.jar
 
-bin/standalone.sh
+# creando archivo module.xml
+touch ~/keycloak-18.0.0/modules/com/mariadb/main/module.xml
 
+<module xmlns="urn:jboss:module:1.3" name="com.mariadb">
+    <resources>
+        <resource-root path="mariadb-java-client-2.3.0.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+
+# creacion de usuario para consola + web
+sh keycloak-18.0.0/bin/add-user.sh --> sistemas:management
+
+# acceso a web-console para crear el conector mariadb
+## editar archivos para acceso desde cualquier equipo de la red a la consola
+nano keycloak-18.0.0/standalone/configuration/standalone.xml
+--> cambiar 127.0.0.1 por 0.0.0.0 
+
+# iniciando la consola en http://$IP:9990/console
+sh keycloak-18.0.0/bin/standalone.sh
+
+# creación de conector para mariadb
+Configuration --> Subsystem --> Datasource & Drivers --> JDBC Drivers --> add (+)
+
+Driver Name : mariadb
+Driver module Name : com.mariadb
+Driver Class Name : org .mariadb.jdbc.Driver
+
+# configuracion de database
+Configuration --> Subsystem --> Datasource & Drivers --> add Datasource
+
+Template: custom
+
+Name : KeycloakDS1
+JNDI Name : java:jboss/datasources/KeycloakDS1
+
+Driver Name : mariadb
+Driver Module Name : com.mariadb
+Driver Class Name : org.mariadb.jdbc.Driver
+
+Connection URL : jdbc:mariadb://localhost:3306/keycloak
+UserName : keycloak
+password : keycloak_password
+
+eliminar ExampleDS + KeycloakDS datasources y salir de la consola.
+
+# creacion de usuario para web
+sh keycloak-18.0.0/bin/add-user-keycloak.sh -u sistemas --> sistemas:password
+
+# editar archivo para corregir el nombre de la database recien creada
+nano keycloak-18.0.0/standalone/configuration/standalone.xml
+--> buscar y reemplazar   <property name="dataSource" value="java:jboss/datasources/KeycloakDS"/>
+--> por                   <property name="dataSource" value="java:jboss/datasources/KeycloakDS1"/>
+
+--> buscar y reemplazar datasource="java:jboss/datasources/ExampleDS"
+--> por                 datasource="java:jboss/datasources/KeycloakDS1"
+
+# iniciando el servidor keycloak
+sh keycloak-18.0.0/bin/standalone.sh
+
+## chequeo de usuarios d database 'keycloak'
+mysql -u keycloak -pkeycloak_password -e 'select USERNAME,FEDERATION_LINK from keycloak.USER_ENTITY;'
+
+######################################################################################################
 # creando certificados para testing
 ## privatekey
 keytool-genkeypair -storepass privatekey -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=keycloak-server" -alias server -ext "SAN:c=DNS:keycloak,IP:192.168.121.202" -keystore conf/server.keystore
@@ -29,4 +89,6 @@ export KEYCLOAK_ADMIN=username
 export KEYCLOAK_ADMIN_PASSWORD=password
 sudo -E bin/kc.sh start
 
-
+## guias para el conector JDBC
+https://janua40.rssing.com/chan-57856102/all_p5.html
+https://www.janua.fr/how-to-install-keycloak-with-mariadb/
