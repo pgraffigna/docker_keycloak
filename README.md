@@ -1,5 +1,6 @@
-# docker_keycloak_wordpress
+# docker_keycloak
 
-Repo con instrucciones para desplegar un servidor keycloak + wordpress para testear SSO + integración con ldap.
+Repo con instrucciones para desplegar un servidor keycloak + integración con ldap.
 
+Testeado con vagrant + qemu + ubuntu20.04
 

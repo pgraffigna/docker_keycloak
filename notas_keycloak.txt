@@ -7,7 +7,7 @@ sudo apt update; sudo apt install -y default-jdk
 
 # instalando keycloak 18
 wget -q https://github.com/keycloak/keycloak/releases/download/18.0.0/keycloak-legacy-18.0.0.tar.gz
-tar -xvf keycloak-legacy-18.0.0.tar.gz 
+tar -xvf keycloak-legacy-18.0.0.tar.gz
 
 # mariadb java connector
 mkdir -p ~/keycloak-18.0.0/modules/com/mariadb/main

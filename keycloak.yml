@@ -1,5 +1,4 @@
 version: '3'
-
 services:
   keycloak:
       #image: quay.io/keycloak/keycloak
@@ -10,9 +9,9 @@ services:
       environment:
         DB_VENDOR: MYSQL
         DB_ADDR: mysql
-        DB_DATABASE: keycloak
-        DB_USER: keycloak
-        DB_PASSWORD: password
+        DB_DATABASE: keycloak_db
+        DB_USER: keycloak_user
+        DB_PASSWORD: keycloak_pass
         KEYCLOAK_USER: pgraffigna
         KEYCLOAK_PASSWORD: Passw0rd123!
       ports:
@@ -28,10 +27,10 @@ services:
       volumes:
         - mysql_data:/var/lib/mysql
       environment:
-        MYSQL_ROOT_PASSWORD: root
-        MYSQL_DATABASE: keycloak
-        MYSQL_USER: keycloak
-        MYSQL_PASSWORD: password
+        MYSQL_ROOT_PASSWORD: mysql_root_pass
+        MYSQL_DATABASE: keycloak_db
+        MYSQL_USER: keycloak_user
+        MYSQL_PASSWORD: keycloak_pass
 
   lldap:
     image: nitnelave/lldap:latest
@@ -46,15 +45,15 @@ services:
     environment:
       - UID=1000
       - GID=1000
-      - LLDAP_JWT_SECRET=JWT_TOKEN
-      - LLDAP_LDAP_USER_PASS=eteZZisn
+      - LLDAP_JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 #jwt_token: secret-key HS-256
+      - LLDAP_LDAP_USER_PASS=testing123!
       - LLDAP_LDAP_BASE_DN=dc=cultura,dc=lab
 
 networks:
   keycloak-net:
     external:
       name: keycloak-net
-# docker network create keycloak-net 
+# docker network create keycloak-net
 
 volumes:
   mysql_data:
@@ -62,5 +61,6 @@ volumes:
   lldap_data:
     driver: local
 
-#jwt_token: secret-key HS-256
-#docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' key_lldap
+# docker volume ls -f name=data
+# docker volume inspect mysql_data
+# docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' key_lldap
